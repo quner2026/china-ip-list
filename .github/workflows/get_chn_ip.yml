@@ -7,9 +7,12 @@ on:
   schedule: # 计划任务触发
     - cron: '0 */8 * * *' # cron表达式，Actions时区是UTC时间
 
+# 必须添加写入权限，否则 GITHUB_TOKEN 无法将代码 push 回仓库
+permissions:
+  contents: write
+
 jobs:
   run-get-ip-list:
-
     runs-on: ubuntu-latest
     
     steps:
@@ -46,22 +49,24 @@ jobs:
     # 提交更改到本地
     - name: Commit files
       run: |
-         git config --local user.email "mayax@github.com"
-         git config --local user.name "mayaxcn"
-         ls
-         pwd
-         git rm -f chn_ip.txt chnroute.txt chn_ip_v6.txt chnroute_v6.txt
-         git commit -m "删除旧有IP文件!"
-         cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chn_ip.txt chn_ip.txt
-         cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chnroute.txt chnroute.txt
-         cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chn_ip_v6.txt chn_ip_v6.txt
-         cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chnroute_v6.txt chnroute_v6.txt
-         git add chn_ip.txt chnroute.txt chn_ip_v6.txt chnroute_v6.txt
-         git commit -m "提交新的IP文件，更新于$(date "+%Y-%m-%d %H:%M:%S")"
+        git config --local user.email "mayax@github.com"
+        git config --local user.name "mayaxcn"
+        ls
+        pwd
+        # 加上 || true 防止文件不存在时报错中断流程
+        git rm -f chn_ip.txt chnroute.txt chn_ip_v6.txt chnroute_v6.txt || true
+        git commit -m "删除旧有IP文件!" || true
+        cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chn_ip.txt chn_ip.txt
+        cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chnroute.txt chnroute.txt
+        cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chn_ip_v6.txt chn_ip_v6.txt
+        cp /home/runner/work/china-ip-list/china-ip-list/bin/Debug/net7.0/chnroute_v6.txt chnroute_v6.txt
+        git add chn_ip.txt chnroute.txt chn_ip_v6.txt chnroute_v6.txt
+        git commit -m "提交新的IP文件，更新于$(date "+%Y-%m-%d %H:%M:%S")"
          
     # 推送到远程
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
-         github_token: ${{ secrets.CHNIP_GIT_KEY }}
-         branch: master
+        # 使用 GitHub 自动提供的默认 Token
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: master
